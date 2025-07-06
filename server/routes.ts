@@ -65,6 +65,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const baseCurrency = base.toLowerCase();
         const backupResponse = await fetch(`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${baseCurrency}.json`);
+        
+        if (!backupResponse.ok) {
+          throw new Error(`Backup API HTTP error! status: ${backupResponse.status}`);
+        }
+        
         const backupData = await backupResponse.json();
         
         if (backupData[baseCurrency]) {
