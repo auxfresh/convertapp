@@ -113,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
                 <div className="flex items-center space-x-3">
                   <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                     <span className="text-white text-sm font-medium">
-                      {getUserInitials(user.displayName)}
+                      {getUserInitials(user.name)}
                     </span>
                   </div>
                   <Button
