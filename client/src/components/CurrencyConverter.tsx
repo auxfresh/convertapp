@@ -206,9 +206,11 @@ export const CurrencyConverter: React.FC = () => {
   const queryClient = useQueryClient();
   const { saveConversion } = useFirebaseConversions();
 
-  const { data: exchangeRates, isLoading } = useQuery<ExchangeRates>({
+  const { data: exchangeRates, isLoading, error } = useQuery<ExchangeRates>({
     queryKey: [`/api/exchange-rates/${fromCurrency}`],
     refetchInterval: 60000, // Refresh every minute
+    retry: 2,
+    staleTime: 300000, // 5 minutes
   });
 
   const addToFavoritesMutation = useMutation({
@@ -237,8 +239,10 @@ export const CurrencyConverter: React.FC = () => {
           exchangeRate: rate,
         });
       }
+    } else if (error) {
+      setConvertedAmount('0');
     }
-  }, [exchangeRates, fromAmount, fromCurrency, toCurrency, user, saveConversion]);
+  }, [exchangeRates, fromAmount, fromCurrency, toCurrency, user, saveConversion, error]);
 
   const handleSwapCurrencies = () => {
     setFromCurrency(toCurrency);

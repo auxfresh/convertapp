@@ -63,13 +63,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Try backup API (Fawaz Ahmed's currency API)
       try {
-        const backupResponse = await fetch(`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${base.toLowerCase()}.json`);
+        const baseCurrency = base.toLowerCase();
+        const backupResponse = await fetch(`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${baseCurrency}.json`);
         const backupData = await backupResponse.json();
         
-        if (backupData[base.toLowerCase()]) {
+        if (backupData[baseCurrency]) {
           // Convert to uppercase currency codes for consistency
           const rates: { [key: string]: number } = {};
-          Object.entries(backupData[base.toLowerCase()]).forEach(([currency, rate]) => {
+          Object.entries(backupData[baseCurrency]).forEach(([currency, rate]) => {
             rates[currency.toUpperCase()] = rate as number;
           });
           return res.json(rates);
