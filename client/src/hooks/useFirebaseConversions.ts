@@ -1,67 +1,60 @@
+
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from './useAuth';
 import { 
-  saveConversionToFirebase, 
-  getRecentConversions, 
-  clearConversionHistory, 
-  ConversionRecord 
-} from '@/lib/firebase';
-import { useToast } from '@/hooks/use-toast';
+  ConversionRecord, 
+  saveConversionToLocalStorage, 
+  getConversionsFromLocalStorage, 
+  clearConversionHistory as clearLocalConversionHistory 
+} from '@/lib/localStorage';
 
 export const useFirebaseConversions = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [conversions, setConversions] = useState<ConversionRecord[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!user?.uid) {
+    if (user) {
+      // Load conversions from localStorage
+      const savedConversions = getConversionsFromLocalStorage();
+      setConversions(savedConversions);
+    } else {
       setConversions([]);
-      return;
     }
-
-    setLoading(true);
-    const unsubscribe = getRecentConversions(user.uid, 50, (newConversions) => {
-      setConversions(newConversions);
-      setLoading(false);
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [user?.uid]);
+  }, [user]);
 
   const saveConversion = async (conversion: Omit<ConversionRecord, 'id' | 'timestamp'>) => {
-    if (!user?.uid) return;
+    if (!user) return;
 
     try {
-      await saveConversionToFirebase(user.uid, conversion);
+      setLoading(true);
+      const id = saveConversionToLocalStorage(conversion);
+      
+      // Update local state
+      const updatedConversions = getConversionsFromLocalStorage();
+      setConversions(updatedConversions);
+      
+      return id;
     } catch (error) {
       console.error('Error saving conversion:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to save conversion to history.',
-        variant: 'destructive',
-      });
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const clearHistory = async () => {
-    if (!user?.uid) return;
+  const clearConversionHistory = async () => {
+    if (!user) return;
 
     try {
-      await clearConversionHistory(user.uid);
-      toast({
-        title: 'History cleared',
-        description: 'Your conversion history has been cleared.',
-      });
+      setLoading(true);
+      clearLocalConversionHistory();
+      setConversions([]);
     } catch (error) {
-      console.error('Error clearing history:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to clear conversion history.',
-        variant: 'destructive',
-      });
+      console.error('Error clearing conversion history:', error);
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -69,7 +62,9 @@ export const useFirebaseConversions = () => {
     conversions,
     loading,
     saveConversion,
-    clearHistory,
-    count: conversions.length,
+    clearConversionHistory,
   };
 };
+
+// Keep the same export name for compatibility
+export const useLocalStorageConversions = useFirebaseConversions;
