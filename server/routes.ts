@@ -44,8 +44,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { base } = req.params;
       
-      // Use exchangerate.host for real-time exchange rates (free, no API key required)
-      const response = await fetch(`https://api.exchangerate.host/latest?base=${base}&places=6`);
+      // Use Frankfurter.app for real-time exchange rates (free, no API key required)
+      const response = await fetch(`https://api.frankfurter.app/latest?from=${base}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -53,8 +53,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const data = await response.json();
       
-      if (!data.success) {
-        throw new Error('Exchange rate API returned error');
+      if (!data.rates) {
+        throw new Error('Exchange rate API returned no rates');
       }
       
       res.json(data.rates);
