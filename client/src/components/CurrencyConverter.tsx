@@ -207,7 +207,7 @@ export const CurrencyConverter: React.FC = () => {
   const { saveConversion } = useFirebaseConversions();
 
   const { data: exchangeRates, isLoading } = useQuery<ExchangeRates>({
-    queryKey: ['/api/exchange-rates', fromCurrency],
+    queryKey: [`/api/exchange-rates/${fromCurrency}`],
     refetchInterval: 60000, // Refresh every minute
   });
 
