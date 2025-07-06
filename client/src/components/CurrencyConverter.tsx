@@ -207,7 +207,19 @@ export const CurrencyConverter: React.FC = () => {
   const { saveConversion } = useFirebaseConversions();
 
   const { data: exchangeRates, isLoading, error } = useQuery<ExchangeRates>({
-    queryKey: [`/api/exchange-rates/${fromCurrency}`],
+    queryKey: [`/api/exchange-rates/${fromCurrency}`, fromAmount, toCurrency],
+    queryFn: async () => {
+      const amount = parseFloat(fromAmount) || 1;
+      const url = amount > 0 && toCurrency 
+        ? `/api/exchange-rates/${fromCurrency}?amount=${amount}&to=${toCurrency}`
+        : `/api/exchange-rates/${fromCurrency}`;
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    },
     refetchInterval: 60000, // Refresh every minute
     retry: 2,
     staleTime: 300000, // 5 minutes
@@ -223,21 +235,37 @@ export const CurrencyConverter: React.FC = () => {
 
   useEffect(() => {
     if (exchangeRates && fromAmount) {
-      const rate = exchangeRates[toCurrency] || 0;
       const amount = parseFloat(fromAmount) || 0;
-      const converted = amount * rate;
-      setConvertedAmount(converted.toFixed(2));
+      
+      // If we got a direct conversion result, use it
+      if (exchangeRates[toCurrency] !== undefined) {
+        const rate = exchangeRates[toCurrency];
+        let converted;
+        
+        // Check if this is a direct conversion result (amount already included)
+        const directConversionAmount = parseFloat(fromAmount) || 1;
+        if (directConversionAmount === 1) {
+          // This is a rate, multiply by our amount
+          converted = amount * rate;
+        } else {
+          // This might be a direct conversion result
+          converted = rate;
+        }
+        
+        setConvertedAmount(converted.toFixed(2));
 
-      // Save conversion to Firebase if user is authenticated
-      if (user && amount > 0) {
-        saveConversion({
-          type: 'currency',
-          fromUnit: fromCurrency,
-          toUnit: toCurrency,
-          fromValue: amount,
-          toValue: converted,
-          exchangeRate: rate,
-        });
+        // Save conversion to Firebase if user is authenticated
+        if (user && amount > 0) {
+          const actualRate = converted / amount;
+          saveConversion({
+            type: 'currency',
+            fromUnit: fromCurrency,
+            toUnit: toCurrency,
+            fromValue: amount,
+            toValue: converted,
+            exchangeRate: actualRate,
+          });
+        }
       }
     } else if (error) {
       setConvertedAmount('0');

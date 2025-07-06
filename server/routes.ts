@@ -43,9 +43,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/exchange-rates/:base", async (req, res) => {
     try {
       const { base } = req.params;
+      const { amount, to } = req.query;
       
-      // Use Frankfurter.app for real-time exchange rates (free, no API key required)
-      const response = await fetch(`https://api.frankfurter.app/latest?from=${base}`);
+      let apiUrl = `https://api.frankfurter.app/latest?from=${base}`;
+      
+      // If amount and target currency are specified, use direct conversion
+      if (amount && to) {
+        apiUrl = `https://api.frankfurter.app/latest?amount=${amount}&from=${base}&to=${to}`;
+      }
+      
+      const response = await fetch(apiUrl);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -63,7 +70,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Try backup API (Fawaz Ahmed's currency API)
       try {
-        const baseCurrency = base.toLowerCase();
+        const baseCurrency = req.params.base.toLowerCase();
         const backupResponse = await fetch(`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${baseCurrency}.json`);
         
         if (!backupResponse.ok) {
