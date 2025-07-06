@@ -5,6 +5,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { signInWithGoogle } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
+import { useFirebaseConversions } from '@/hooks/useFirebaseConversions';
 
 interface HeaderProps {
   activeTab: string;
@@ -15,11 +16,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [showUserMenu, setShowUserMenu] = useState(false);
-
-  const { data: historyCount = 0 } = useQuery({
-    queryKey: ['/api/conversions/count'],
-    enabled: !!user,
-  });
+  const { count: historyCount } = useFirebaseConversions();
 
   const tabs = [
     { id: 'currency', label: 'Currency', href: '#currency' },

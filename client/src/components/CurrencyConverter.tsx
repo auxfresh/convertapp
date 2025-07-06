@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useFirebaseConversions } from '@/hooks/useFirebaseConversions';
 
 interface ExchangeRates {
   [key: string]: number;
@@ -36,18 +37,11 @@ export const CurrencyConverter: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { saveConversion } = useFirebaseConversions();
 
   const { data: exchangeRates, isLoading } = useQuery<ExchangeRates>({
     queryKey: ['/api/exchange-rates', fromCurrency],
     refetchInterval: 60000, // Refresh every minute
-  });
-
-  const saveConversionMutation = useMutation({
-    mutationFn: (conversion: any) => apiRequest('POST', '/api/conversions', conversion),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/conversions'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/conversions/count'] });
-    },
   });
 
   const addToFavoritesMutation = useMutation({
@@ -65,9 +59,9 @@ export const CurrencyConverter: React.FC = () => {
       const converted = amount * rate;
       setConvertedAmount(converted.toFixed(2));
 
-      // Save conversion if user is authenticated
+      // Save conversion to Firebase if user is authenticated
       if (user && amount > 0) {
-        saveConversionMutation.mutate({
+        saveConversion({
           type: 'currency',
           fromUnit: fromCurrency,
           toUnit: toCurrency,
@@ -77,7 +71,7 @@ export const CurrencyConverter: React.FC = () => {
         });
       }
     }
-  }, [exchangeRates, fromAmount, fromCurrency, toCurrency, user]);
+  }, [exchangeRates, fromAmount, fromCurrency, toCurrency, user, saveConversion]);
 
   const handleSwapCurrencies = () => {
     setFromCurrency(toCurrency);

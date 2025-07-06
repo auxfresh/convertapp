@@ -5,38 +5,28 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { Conversion, Favorite } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
+import { useFirebaseConversions } from '@/hooks/useFirebaseConversions';
+import { ConversionRecord } from '@/lib/firebase';
 
 export const Sidebar: React.FC = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-
-  const { data: conversions = [] } = useQuery<Conversion[]>({
-    queryKey: ['/api/conversions'],
-    enabled: !!user,
-  });
+  const { conversions, clearHistory, loading } = useFirebaseConversions();
 
   const { data: favorites = [] } = useQuery<Favorite[]>({
     queryKey: ['/api/favorites'],
     enabled: !!user,
   });
 
-  const clearHistoryMutation = useMutation({
-    mutationFn: () => apiRequest('DELETE', '/api/conversions'),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/conversions'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/conversions/count'] });
-    },
-  });
-
-  const formatConversion = (conversion: Conversion) => {
+  const formatConversion = (conversion: ConversionRecord) => {
     const fromSymbol = conversion.type === 'currency' ? '' : ' ';
     const toSymbol = conversion.type === 'currency' ? (conversion.toUnit === 'EUR' ? '€' : '$') : ' ';
     return `${conversion.fromValue}${fromSymbol}${conversion.fromUnit} → ${toSymbol}${conversion.toValue.toFixed(2)}${conversion.toUnit === 'EUR' ? '' : ' ' + conversion.toUnit}`;
   };
 
-  const formatTimeAgo = (date: Date) => {
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+  const formatTimeAgo = (timestamp: number) => {
+    const now = Date.now();
+    const diffInMinutes = Math.floor((now - timestamp) / (1000 * 60));
     
     if (diffInMinutes < 1) return 'Just now';
     if (diffInMinutes < 60) return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
@@ -88,8 +78,8 @@ export const Sidebar: React.FC = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => clearHistoryMutation.mutate()}
-              disabled={clearHistoryMutation.isPending}
+              onClick={clearHistory}
+              disabled={loading}
               className="text-sm text-primary hover:text-blue-600"
             >
               Clear
@@ -106,7 +96,7 @@ export const Sidebar: React.FC = () => {
                     {formatConversion(conversion)}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
-                    {formatTimeAgo(new Date(conversion.createdAt))}
+                    {formatTimeAgo(conversion.timestamp)}
                   </div>
                 </div>
                 <Button

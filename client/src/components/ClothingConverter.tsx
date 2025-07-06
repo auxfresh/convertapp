@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useFirebaseConversions } from '@/hooks/useFirebaseConversions';
 
 interface SizeConversions {
   [key: string]: { US: string; UK: string; EU: string; };
@@ -42,14 +43,7 @@ export const ClothingConverter: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  const saveConversionMutation = useMutation({
-    mutationFn: (conversion: any) => apiRequest('POST', '/api/conversions', conversion),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/conversions'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/conversions/count'] });
-    },
-  });
+  const { saveConversion } = useFirebaseConversions();
 
   const addToFavoritesMutation = useMutation({
     mutationFn: (favorite: any) => apiRequest('POST', '/api/favorites', favorite),
@@ -67,11 +61,11 @@ export const ClothingConverter: React.FC = () => {
   const handleSizeChange = (size: string) => {
     setSelectedSize(size);
     
-    // Save conversion if user is authenticated
+    // Save conversion to Firebase if user is authenticated
     if (user) {
       const currentSizes = type === 'clothing' ? clothingSizes[size] : shoeSizes[size];
       if (currentSizes) {
-        saveConversionMutation.mutate({
+        saveConversion({
           type: 'clothing',
           fromUnit: `US-${type}`,
           toUnit: `UK-EU-${type}`,

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a full-stack web application that provides multiple conversion tools and a calculator. The application features currency conversion, length/weight conversion, clothing size conversion, and a calculator, all wrapped in a modern React-based user interface with authentication and data persistence.
+This is a full-stack web application that provides multiple conversion tools and a calculator. The application features currency conversion, length/weight conversion, clothing size conversion, and a calculator, all wrapped in a modern React-based user interface with Firebase authentication and Firebase Realtime Database for storing user conversion history.
 
 ## System Architecture
 
@@ -18,16 +18,15 @@ This is a full-stack web application that provides multiple conversion tools and
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js server
 - **Language**: TypeScript with ESM modules
-- **Database**: PostgreSQL with Drizzle ORM
-- **Database Provider**: Neon Database (serverless PostgreSQL)
-- **Session Management**: In-memory storage with fallback to PostgreSQL for production
+- **Database**: In-memory storage for development/testing (PostgreSQL schemas available)
+- **External APIs**: Exchange rate API for currency conversion
 - **API Design**: RESTful endpoints with proper error handling
 
 ### Data Storage Solutions
-- **Primary Database**: PostgreSQL via Neon Database
-- **ORM**: Drizzle ORM with type-safe queries and migrations
-- **Development Storage**: In-memory storage for development/testing
-- **Session Storage**: PostgreSQL-based session storage for user authentication
+- **User Conversion History**: Firebase Realtime Database for real-time storage and sync
+- **User Authentication**: Firebase Authentication with Google OAuth
+- **Development Storage**: In-memory storage for non-user data
+- **Real-time Updates**: Firebase Realtime Database provides live updates to conversion history
 
 ## Key Components
 
@@ -45,10 +44,10 @@ This is a full-stack web application that provides multiple conversion tools and
 5. **Calculator**: Basic arithmetic calculator with memory functions
 
 ### Data Management
-- **User Profiles**: Store user information and preferences
-- **Conversion History**: Track and display user's conversion history
-- **Favorites**: Save frequently used conversion pairs
-- **Real-time Updates**: Live exchange rate updates for currency conversions
+- **User Profiles**: Firebase Authentication manages user information
+- **Conversion History**: Firebase Realtime Database stores and syncs user conversion history in real-time
+- **Favorites**: Save frequently used conversion pairs (backend API)
+- **Real-time Updates**: Live exchange rate updates for currency conversions and real-time conversion history sync
 
 ### UI/UX Features
 - **Responsive Design**: Mobile-first approach with Tailwind CSS
@@ -59,11 +58,11 @@ This is a full-stack web application that provides multiple conversion tools and
 
 ## Data Flow
 
-1. **User Authentication**: Firebase handles authentication, backend syncs user data
-2. **Conversion Requests**: Frontend makes API calls, backend processes and stores results
-3. **Real-time Data**: Exchange rates fetched from external APIs and cached
-4. **Persistence**: All user data, history, and favorites stored in PostgreSQL
-5. **State Management**: React Query manages server state with optimistic updates
+1. **User Authentication**: Firebase handles authentication with Google OAuth
+2. **Conversion Requests**: Frontend performs conversions locally and saves to Firebase Realtime Database
+3. **Real-time Data**: Exchange rates fetched from external APIs and cached; conversion history synced in real-time via Firebase
+4. **Persistence**: User conversion history stored in Firebase Realtime Database; favorites stored via backend API
+5. **State Management**: React Query manages server state; custom Firebase hooks manage real-time conversion history
 
 ## External Dependencies
 
@@ -104,8 +103,18 @@ This is a full-stack web application that provides multiple conversion tools and
 - **CDN**: Static assets can be served via CDN
 
 ## Changelog
-- July 06, 2025. Initial setup
+- July 06, 2025: Initial setup
+- July 06, 2025: Integrated Firebase Realtime Database for storing user conversion history
+- July 06, 2025: Updated all converter components to save conversion data to Firebase instead of backend API
+- July 06, 2025: Created useFirebaseConversions hook for real-time conversion history management
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+
+## Recent Changes
+✓ Firebase Realtime Database integration completed
+✓ All converter components now save to Firebase 
+✓ Real-time conversion history sync implemented
+✓ Custom Firebase hooks created for data management
+→ Firebase domain authorization pending (requires user to add domain to Firebase console)

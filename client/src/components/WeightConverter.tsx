@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useFirebaseConversions } from '@/hooks/useFirebaseConversions';
 
 interface WeightValues {
   kg: string;
@@ -32,14 +33,7 @@ export const WeightConverter: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  const saveConversionMutation = useMutation({
-    mutationFn: (conversion: any) => apiRequest('POST', '/api/conversions', conversion),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/conversions'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/conversions/count'] });
-    },
-  });
+  const { saveConversion } = useFirebaseConversions();
 
   const addToFavoritesMutation = useMutation({
     mutationFn: (favorite: any) => apiRequest('POST', '/api/favorites', favorite),
@@ -85,9 +79,9 @@ export const WeightConverter: React.FC = () => {
     newValues[unit] = value; // Keep the user's input as-is
     setValues(newValues);
 
-    // Save conversion if user is authenticated and value is valid
+    // Save conversion to Firebase if user is authenticated and value is valid
     if (user && numValue > 0) {
-      saveConversionMutation.mutate({
+      saveConversion({
         type: 'weight',
         fromUnit: unit,
         toUnit: 'kg', // Using kg as base unit
