@@ -43,38 +43,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/exchange-rates/:base", async (req, res) => {
     try {
       const { base } = req.params;
-      const API_KEY = process.env.EXCHANGE_RATE_API_KEY || "demo-key";
       
-      // Use exchangerate-api.com for real exchange rates
-      const response = await fetch(`https://v6.exchangerate-api.com/v6/${API_KEY}/latest/${base}`);
+      // Use exchangerate.host for real-time exchange rates (free, no API key required)
+      const response = await fetch(`https://api.exchangerate.host/latest?base=${base}&places=6`);
       
       if (!response.ok) {
-        // Fallback to mock data if API fails
-        const mockRates = {
-          USD: { EUR: 0.8527, GBP: 0.7923, JPY: 149.87, CAD: 1.3456, AUD: 1.5234, CHF: 0.8834, CNY: 7.2345 },
-          EUR: { USD: 1.1728, GBP: 0.9291, JPY: 175.78, CAD: 1.5789, AUD: 1.7856, CHF: 1.0359, CNY: 8.4892 },
-          GBP: { USD: 1.2619, EUR: 1.0763, JPY: 189.12, CAD: 1.6987, AUD: 1.9234, CHF: 1.1145, CNY: 9.1347 },
-        };
-        
-        const rates = mockRates[base as keyof typeof mockRates] || mockRates.USD;
-        return res.json(rates);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      res.json(data.conversion_rates);
+      
+      if (!data.success) {
+        throw new Error('Exchange rate API returned error');
+      }
+      
+      res.json(data.rates);
     } catch (error) {
       console.error("Exchange rate error:", error);
-      // Return mock data on error
-      const mockRates = {
-        EUR: 0.8527,
-        GBP: 0.7923,
-        JPY: 149.87,
-        CAD: 1.3456,
-        AUD: 1.5234,
-        CHF: 0.8834,
-        CNY: 7.2345
-      };
-      res.json(mockRates);
+      
+      // Try backup API (Fawaz Ahmed's currency API)
+      try {
+        const backupResponse = await fetch(`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${base.toLowerCase()}.json`);
+        const backupData = await backupResponse.json();
+        
+        if (backupData[base.toLowerCase()]) {
+          // Convert to uppercase currency codes for consistency
+          const rates: { [key: string]: number } = {};
+          Object.entries(backupData[base.toLowerCase()]).forEach(([currency, rate]) => {
+            rates[currency.toUpperCase()] = rate as number;
+          });
+          return res.json(rates);
+        }
+      } catch (backupError) {
+        console.error("Backup exchange rate API error:", backupError);
+      }
+      
+      res.status(500).json({ error: "Failed to fetch exchange rates" });
     }
   });
 

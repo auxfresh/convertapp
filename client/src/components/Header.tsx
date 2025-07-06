@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Calculator, Sun, Moon, History, LogIn, ChevronDown, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
-import { signInWithGoogle } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { useFirebaseConversions } from '@/hooks/useFirebaseConversions';
+import { AuthModal } from '@/components/AuthModal';
 
 interface HeaderProps {
   activeTab: string;
@@ -16,6 +16,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const { count: historyCount } = useFirebaseConversions();
 
   const tabs = [
@@ -27,7 +28,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
   ];
 
   const handleSignIn = () => {
-    signInWithGoogle().catch(console.error);
+    setShowAuthModal(true);
   };
 
   const handleSignOut = () => {
@@ -148,6 +149,9 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
           </div>
         </div>
       </div>
+
+      {/* Authentication Modal */}
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
 
       {/* Mobile Navigation */}
       <div className="md:hidden border-t border-slate-200 dark:border-slate-700">

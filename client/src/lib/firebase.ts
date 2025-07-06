@@ -1,5 +1,16 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, User } from "firebase/auth";
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithRedirect, 
+  getRedirectResult, 
+  signOut, 
+  User,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  updateProfile
+} from "firebase/auth";
 import { getDatabase, ref, push, set, query, orderByChild, limitToLast, onValue, off, remove } from "firebase/database";
 
 const firebaseConfig = {
@@ -16,6 +27,7 @@ export const auth = getAuth(app);
 export const database = getDatabase(app);
 export const googleProvider = new GoogleAuthProvider();
 
+// Google Sign-in
 export const signInWithGoogle = () => {
   return signInWithRedirect(auth, googleProvider);
 };
@@ -26,6 +38,44 @@ export const handleAuthRedirect = async () => {
     return result;
   } catch (error) {
     console.error("Auth redirect error:", error);
+    throw error;
+  }
+};
+
+// Email/Password Authentication
+export const signUpWithEmailAndPassword = async (email: string, password: string, displayName: string) => {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    
+    // Update the user's display name
+    if (userCredential.user && displayName) {
+      await updateProfile(userCredential.user, {
+        displayName: displayName
+      });
+    }
+    
+    return userCredential;
+  } catch (error) {
+    console.error("Sign up error:", error);
+    throw error;
+  }
+};
+
+export const signInWithEmail = async (email: string, password: string) => {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    return userCredential;
+  } catch (error) {
+    console.error("Sign in error:", error);
+    throw error;
+  }
+};
+
+export const resetPassword = async (email: string) => {
+  try {
+    await sendPasswordResetEmail(auth, email);
+  } catch (error) {
+    console.error("Password reset error:", error);
     throw error;
   }
 };
