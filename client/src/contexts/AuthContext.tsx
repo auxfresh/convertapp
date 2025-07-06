@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { saveUserToLocalStorage, getUserFromLocalStorage, removeUserFromLocalStorage, UserData } from '@/lib/localStorage';
 
@@ -39,7 +38,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Simple validation - in a real app, this would be handled by a backend
     const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
     const user = users.find((u: any) => u.email === email && u.password === password);
-    
+
     if (!user) {
       throw new Error('Invalid email or password');
     }
@@ -58,7 +57,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check if user already exists
     const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
     const existingUser = users.find((u: any) => u.email === email);
-    
+
     if (existingUser) {
       throw new Error('User already exists with this email');
     }

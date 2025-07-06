@@ -8,9 +8,17 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(method: string, url: string, data?: unknown | undefined,): Promise<Response> {
+  // Get user from localStorage
+  const userData = localStorage.getItem('user');
+  const user = userData ? JSON.parse(userData) : null;
+
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers: {
+      "Content-Type": "application/json",
+      ...(user?.id && { 'x-user-id': user.id.toString() }),
+      
+    },
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
