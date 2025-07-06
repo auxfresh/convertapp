@@ -1,0 +1,4 @@
+/api/favorites /.netlify/functions/favorites 200
+/api/exchange-rates/* /.netlify/functions/exchange-rates 200
+/api/* /.netlify/functions/api-proxy/:splat 200
+/* /index.html 200
